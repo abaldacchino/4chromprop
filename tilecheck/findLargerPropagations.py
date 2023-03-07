@@ -325,4 +325,24 @@ if __name__ == "__main__":
         if get_to_4:
             tiles_can_get_to_4 += [prop]
 
-    print(len(tiles_can_get_to_4))
+    print("No of tiles that feature in a 4 chromatic sequence = ", len(tiles_can_get_to_4))
+    could_be_4chrom_tiles = []
+    for tile in tiles:
+        for tile_prop in tiles_can_get_to_4:
+            if props_equal(tile_prop_mapping[tile], tile_prop):
+                could_be_4chrom_tiles += [tile]
+    print(could_be_4chrom_tiles)
+    print(len(could_be_4chrom_tiles))
+
+    props_can_get_to_4 = []
+    for prop in all_props:
+        successors = all_successors(prop, all_props, propagation_combinations)
+        get_to_4 = False
+        if prop_in_list(prop, naughty_tiles):
+            get_to_4 = True
+        for successor in successors:
+            if prop_in_list(successor, naughty_tiles):
+                get_to_4 = True
+        if get_to_4:
+            props_can_get_to_4 += [prop]
+    print("No of propagations that feature in a 4 chromatic sequence = ", len(props_can_get_to_4))
