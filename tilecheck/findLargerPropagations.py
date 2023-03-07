@@ -134,11 +134,31 @@ def remove_duplicates(prop_list):
 
 
 def all_successors(prop, all_props, propagation_combinations):
+    """
+    Finds all propagations that arise from propagation prop
+    :param prop:
+    :param all_props:
+    :param propagation_combinations:
+    :return:
+    """
     successors = []
     for prop2 in all_props:
+        # finding propagations that can arise from prop
         successor = propagation_combinations[getStringRep(prop)][getStringRep(prop2)]
         if not prop_in_list(successor, successors):
             successors += [successor]
+
+    new_successors = successors.copy()
+    while new_successors:
+        next_successors = []
+        for succ in new_successors:
+            for prop2 in all_props:
+                successor = propagation_combinations[getStringRep(succ)][getStringRep(prop2)]
+                if not prop_in_list(successor, successors):
+                    successors += [successor]
+                    next_successors += [successor]
+        new_successors = next_successors
+    return successors
 
 
 if __name__ == "__main__":
@@ -292,3 +312,17 @@ if __name__ == "__main__":
     print("Which propagations can result in 4-chromatic combinations?")
     print("How often do they do so?")
     print(lead_to_4)
+
+    tiles_can_get_to_4 = []
+    for prop in tile_props:
+        successors = all_successors(prop, tile_props, propagation_combinations)
+        get_to_4 = False
+        if prop_in_list(prop, naughty_tiles):
+            get_to_4 = True
+        for successor in successors:
+            if prop_in_list(successor, naughty_tiles):
+                get_to_4 = True
+        if get_to_4:
+            tiles_can_get_to_4 += [prop]
+
+    print(len(tiles_can_get_to_4))
