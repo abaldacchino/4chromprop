@@ -66,7 +66,7 @@ def getTilePropagations(filename="info.json"):
         # checking if new_prop is already stored in tile_props
         stored = False
         for prop in tile_props:
-            if np.equal(prop, new_prop).all():
+            if props_equal(prop, new_prop):
                 stored = True
         # if not, add it to tile_props
         if not stored:
@@ -76,18 +76,69 @@ def getTilePropagations(filename="info.json"):
 
 
 def get_combination(prop1, prop2, all_props):
+    """
+    Method multiplies prop1 * prop2 to get another propagation and checks if
+    the propagation is newly encountered by checking with all_props
+    :param prop1: Adjacency matrix to be multiplied first
+    :param prop2: Adjacency matrix to be multiplied second
+    :param all_props: List of all propagations
+    :return: Returns the resulting propagation and whether it is stored in the all_props list or not
+    """
     # multiplying matrices prop1 and prop2
     combination = np.matmul(prop1, prop2)
     # normalising matrix so all positive integers become 1s
     combination[(combination > 0)] = 1
 
     # checking if propagation is newly encountered
-    stored = False
-    for prop in all_props:
-        if np.equal(prop, combination).all():
-            stored = True
+    stored = prop_in_list(combination, all_props)
 
     return combination, stored
+
+
+def props_equal(prop1, prop2):
+    """
+    Checks if prop1 is equal to prop2
+    :param prop1: Adjacency matrix for a propagation
+    :param prop2: Adjacency matrix for a propagation
+    :return: True/False depending on whether propagations are equal or not
+    """
+    return np.equal(prop1, prop2).all()
+
+
+def prop_in_list(prop, proplist):
+    """
+    Method checks if a propagation is in a list of propagations
+    :param prop: propagation to be checked
+    :param proplist: list of propagations
+    :return: True if found, False if not found in list
+    """
+    stored = False
+    for prop2 in proplist:
+        if props_equal(prop, prop2):
+            stored = True
+    return stored
+
+
+def remove_duplicates(prop_list):
+    """
+    Removes duplicates from a propagation list
+    :param prop_list: list of propagations
+    :return: filtered list of propagations such that no two are equal
+    """
+    unique_list = []
+    for prop in prop_list:
+        if not prop_in_list(prop, unique_list):
+            unique_list += [prop]
+
+    return unique_list
+
+
+def all_successors(prop, all_props, propagation_combinations):
+    successors = []
+    for prop2 in all_props:
+        successor = propagation_combinations[getStringRep(prop)][getStringRep(prop2)]
+        if not prop_in_list(successor, successors):
+            successors += [successor]
 
 
 if __name__ == "__main__":
@@ -163,30 +214,10 @@ if __name__ == "__main__":
     count = 0
     for prop1 in all_props:
         for prop2 in all_props:
-            if np.equal(prop1, prop2).all():
+            if props_equal(prop1, prop2):
                 count += 1
     print("Number of unique large propagations = ", len(all_props))
     print("Number of duplicates = ", (len(all_props) - count))
-
-    # all_props = tile_props.copy()
-    # prev_props = 0
-    # new_props = len(all_props)
-    # while not prev_props == new_props:
-    #     prev_props = new_props
-    #     for prop1 in all_props:
-    #         for prop2 in all_props:
-    #             if getStringRep(prop2) not in propagation_combinations[getStringRep(prop1)]:
-    #                 combination = np.matmul(prop1, prop2)
-    #                 combination[(combination > 0)] = 1
-    #                 propagation_combinations[getStringRep(prop1)][getStringRep(prop2)] = combination
-    #                 stored = False
-    #                 for prop in all_props:
-    #                     if np.equal(prop, combination).all():
-    #                         stored = True
-    #                 if not stored:
-    #                     all_props += [combination]
-    #                     propagation_combinations[getStringRep(combination)] = {}
-    #     new_props = len(all_props)
 
     # finding propagations which do not allow a 4-colouring were you to loop them
     naughty_tiles = []
@@ -195,9 +226,8 @@ if __name__ == "__main__":
     for prop in all_props:
         if prop[0][0] == 0 and prop[1][1] == 0:
             naughty_tiles += [prop]
-            for tile_prop in tile_props:
-                if np.equal(tile_prop, prop).all():
-                    naughty_initials += [prop]
+            if prop_in_list(prop, tile_props):
+                naughty_initials += [prop]
 
     print(len(naughty_tiles), "propagations are 4-chromatic when looping back")
     print(len(naughty_initials), "tiles are 4-chromatic when looping back")
@@ -229,8 +259,9 @@ if __name__ == "__main__":
             combination = propagation_combinations[getStringRep(prop1)][getStringRep(prop2)]
             # checking if the combination is 4-chromatic
             naughty_combination = False
+
             for naughty in naughty_tiles:
-                if np.equal(naughty, combination).all():
+                if props_equal(naughty, combination):
                     naughty_combination = True
                     end_tile_count[getStringRep(naughty)] += 1
             # if combination if 4-chromatic store data
@@ -243,7 +274,7 @@ if __name__ == "__main__":
                 if getStringRep(prop2) not in lead_to_4:
                     lead_to_4[getStringRep(prop2)] = 0
                 lead_to_4[getStringRep(prop1)] += 1
-                if not np.equal(prop1, prop2).all(): #checking if propagations are equal
+                if not props_equal(prop1, prop2):  # checking if propagations are equal
                     lead_to_4[getStringRep(prop2)] += 1
 
     print("Number of combinations that lead to a 4-chromatic sequence:", len(naughty_combinations))
