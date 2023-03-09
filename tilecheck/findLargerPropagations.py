@@ -161,6 +161,206 @@ def all_successors(prop, all_props, propagation_combinations):
     return successors
 
 
+def find_and_print_succ_data(all_props, tile_props, tile_prop_mapping, naughty_propagations, propagation_combinations):
+    """
+    Method finds and prints data regarding successors and 4-chromatic tiles
+    :param all_props: All propagations
+    :param tile_props: Propagations for the tiles
+    :param tile_prop_mapping: Mapping of a tile label to its propagation
+    :param naughty_propagations: 4-chromatic propagations
+    :param propagation_combinations: dictionary which specifies all combinations of propagations
+    :return:
+    """
+    tiles_can_get_to_4 = []
+    for prop in tile_props:
+        successors = all_successors(prop, tile_props, propagation_combinations)
+        get_to_4 = False
+        # number of propagations don't change even if this is ommitted
+        if prop_in_list(prop, naughty_propagations):
+            get_to_4 = True
+        # this means every 4-chromatic tile also has 4-chromatic predecessors
+        for successor in successors:
+            if prop_in_list(successor, naughty_propagations):
+                get_to_4 = True
+        if get_to_4:
+            tiles_can_get_to_4 += [prop]
+    print("No of tile propagations that feature in a 4 chromatic sequence = ", len(tiles_can_get_to_4))
+
+    # finding the corresponding tiles to above propagations
+    could_be_4chrom_tiles = []
+    for tile in tiles:
+        for tile_prop in tiles_can_get_to_4:
+            if props_equal(tile_prop_mapping[tile], tile_prop):
+                could_be_4chrom_tiles += [tile]
+                print(tile, getStringRep(tile_prop))
+    print("Tiles that can be included in a 4 chromatic sequence =", could_be_4chrom_tiles)
+    print("Number of tiles of interest =", len(could_be_4chrom_tiles))
+
+    # finding all propagations that can be included in a 4-chromatic sequence
+    props_can_get_to_4 = []
+    for prop in all_props:
+        successors = all_successors(prop, all_props, propagation_combinations)
+        get_to_4 = False
+        if prop_in_list(prop, naughty_propagations):
+            get_to_4 = True
+        for successor in successors:
+            if prop_in_list(successor, naughty_propagations):
+                get_to_4 = True
+        if get_to_4:
+            props_can_get_to_4 += [prop]
+    print("No of propagations that feature in a 4 chromatic sequence = ", len(props_can_get_to_4))
+
+    naughty_can_get_to_4 = []
+    stopping4 = []
+    for prop in naughty_propagations:
+        successors = all_successors(prop, all_props, propagation_combinations)
+        get_to_4 = False
+        for successor in successors:
+            if prop_in_list(successor, naughty_propagations):
+                get_to_4 = True
+        if get_to_4:
+            naughty_can_get_to_4 += [prop]
+        if not get_to_4:
+            stopping4 += [prop]
+    print("From the ", len(naughty_propagations), " propagations that are 4-chromatic")
+    print(len(naughty_can_get_to_4), "have 4-chromatic successors")
+
+    # finding which propagations can end in a 4-colourable propagation that can still be 4
+    # colourable after we add more tiles!
+    tiles_can_get_to_4 = []
+    for prop in tile_props:
+        successors = all_successors(prop, tile_props, propagation_combinations)
+        get_to_4 = False
+        for successor in successors:
+            if prop_in_list(successor, naughty_can_get_to_4):
+                get_to_4 = True
+        if get_to_4:
+            tiles_can_get_to_4 += [prop]
+    print("No of tile propagations that feature in a 4 chromatic sequence  that do not end= ", len(tiles_can_get_to_4))
+
+
+def find_and_print_4chrom_data(all_props, naughty_propagations, propagation_combinations):
+    """
+    Messy method that will display nicely some statistics on 4-chromatic propagations
+    :param all_props:
+    :param naughty_propagations:
+    :param propagation_combinations:
+    :return:
+    """
+
+    # Note: the following datasets contain redundant info, in different formats
+    # some refactoring is in order...
+
+    # finding combinations of 2 propagations which turn out 4-chromatic ie end with a
+    # 4-chromatic tile
+    naughty_combinations = []
+    # dictionary that stores count of how many such combinations end with a given propagation
+    end_tile_count = {}
+    # dictionary that given a 4-chromatic propagation, points to a list of all the pairs of
+    # propagations whose multiplication results in said propagation
+    four_chromatic_pairs = {}
+    # dictionary that given a propagation that may lead to a 4-chromatic propagation, stores the
+    # number of times it will lead to a 4-chromatic propagation
+    lead_to_4 = {}
+
+    # initialising dictionaries
+    for prop in all_props:
+        four_chromatic_pairs[getStringRep(prop)] = []
+    for four_colour_tile in naughty_propagations:
+        end_tile_count[getStringRep(four_colour_tile)] = 0
+
+    # traversing all propagations to populate data
+    for prop1 in all_props:
+        for prop2 in all_props:
+            combination = propagation_combinations[getStringRep(prop1)][getStringRep(prop2)]
+            # checking if the combination is 4-chromatic
+            naughty_combination = False
+
+            for naughty in naughty_propagations:
+                if props_equal(naughty, combination):
+                    naughty_combination = True
+                    end_tile_count[getStringRep(naughty)] += 1
+            # if combination if 4-chromatic store data
+            if naughty_combination:
+                naughty_combinations += [(prop1, prop2)]
+                four_chromatic_pairs[getStringRep(combination)] += [(getStringRep(prop1), getStringRep(prop2))]
+                # initialising lead_to_4 to 0
+                if getStringRep(prop1) not in lead_to_4:
+                    lead_to_4[getStringRep(prop1)] = 0
+                if getStringRep(prop2) not in lead_to_4:
+                    lead_to_4[getStringRep(prop2)] = 0
+                lead_to_4[getStringRep(prop1)] += 1
+                if not props_equal(prop1, prop2):  # checking if propagations are equal
+                    lead_to_4[getStringRep(prop2)] += 1
+
+    print("Number of combinations that lead to a 4-chromatic sequence:", len(naughty_combinations))
+    print("How are these distributed against 4-chromatic propagations")
+    print(end_tile_count)
+
+    i = 1
+    countpropcombs = 0
+    for naughty in naughty_propagations:
+        print("Propagation", i)
+        print("Represented by: ", getStringRep(naughty))
+        print("This one is led to by", len(four_chromatic_pairs[getStringRep(naughty)]), "tile combinations")
+        countpropcombs += len(four_chromatic_pairs[getStringRep(naughty)])
+        print(four_chromatic_pairs[getStringRep(naughty)])
+        i += 1
+    print("countpropcombs", countpropcombs)
+
+    print("Which propagations can result in 4-chromatic combinations?")
+    print("How often do they do so?")
+    print("No of propagations that can lead to a 4 chromatic sequence =", len(lead_to_4.keys()))
+    print(lead_to_4)
+
+
+def get_index(prop, prop_list):
+    for i, p in enumerate(prop_list):
+        if props_equal(prop, p):
+            return i
+    return -1
+
+
+def get_combination_subset(all_props, naughty_props, propagation_combinations, edge_labels):
+    prop_list = naughty_props.copy()
+    edge_list = []
+
+    for prop1 in all_props:
+        for prop2 in all_props:
+            combination = propagation_combinations[getStringRep(prop1)][(getStringRep(prop2))]
+            if prop_in_list(combination, naughty_props):
+                # adding components if they are not already in the prop list
+                for prop in [prop1, prop2]:
+                    if not prop_in_list(prop, prop_list):
+                        prop_list += [prop]
+
+    filt_edge_label = []
+    for edge_label in edge_labels:
+        if prop_in_list(edge_label, prop_list):
+            filt_edge_label += [edge_label]
+
+            # vertices will just be numbers 0, 1, 2 ... m for simplicity's sake
+    vertices = list(range(0, len(prop_list)))
+    vertex_prop_map = {}
+    edge_indices = []
+    final_states = []
+    for i, prop in enumerate(prop_list):
+        vertex_prop_map[i] = prop
+        if prop_in_list(prop, filt_edge_label):
+            edge_indices += [i]
+        if prop_in_list(prop, naughty_props):
+            final_states += [i]
+
+    for prop1 in prop_list:
+        for prop2 in filt_edge_label:
+            combination = propagation_combinations[getStringRep(prop1)][(getStringRep(prop2))]
+            if prop_in_list(combination, prop_list):
+                edge_list += [(get_index(prop1, prop_list), get_index(prop2, prop_list),
+                               get_index(combination, prop_list))]
+
+    return vertices, edge_list, edge_indices, vertex_prop_map, final_states
+
+
 if __name__ == "__main__":
     # getting tile propagations
     tile_props, tile_prop_mapping = getTilePropagations()
@@ -252,115 +452,14 @@ if __name__ == "__main__":
     print(len(naughty_propagations), "propagations are 4-chromatic when looping back")
     print(len(naughty_tile_props), "tiles are 4-chromatic when looping back")
 
-    # Note: the following datasets contain redundant info, in different formats
-    # some refactoring is in order...
-
-    # finding combinations of 2 propagations which turn out 4-chromatic ie end with a
-    # 4-chromatic tile
-    naughty_combinations = []
-    # dictionary that stores count of how many such combinations end with a given propagation
-    end_tile_count = {}
-    # dictionary that given a 4-chromatic propagation, points to a list of all the pairs of
-    # propagations whose multiplication results in said propagation
-    four_chromatic_pairs = {}
-    # dictionary that given a propagation that may lead to a 4-chromatic propagation, stores the
-    # number of times it will lead to a 4-chromatic propagation
-    lead_to_4 = {}
-
-    # initialising dictionaries
-    for prop in all_props:
-        four_chromatic_pairs[getStringRep(prop)] = []
-    for four_colour_tile in naughty_propagations:
-        end_tile_count[getStringRep(four_colour_tile)] = 0
-
-    # traversing all propagations
-    for prop1 in all_props:
-        for prop2 in all_props:
-            combination = propagation_combinations[getStringRep(prop1)][getStringRep(prop2)]
-            # checking if the combination is 4-chromatic
-            naughty_combination = False
-
-            for naughty in naughty_propagations:
-                if props_equal(naughty, combination):
-                    naughty_combination = True
-                    end_tile_count[getStringRep(naughty)] += 1
-            # if combination if 4-chromatic store data
-            if naughty_combination:
-                naughty_combinations += [(prop1, prop2)]
-                four_chromatic_pairs[getStringRep(combination)] += [(getStringRep(prop1), getStringRep(prop2))]
-                # initialising lead_to_4 to 0
-                if getStringRep(prop1) not in lead_to_4:
-                    lead_to_4[getStringRep(prop1)] = 0
-                if getStringRep(prop2) not in lead_to_4:
-                    lead_to_4[getStringRep(prop2)] = 0
-                lead_to_4[getStringRep(prop1)] += 1
-                if not props_equal(prop1, prop2):  # checking if propagations are equal
-                    lead_to_4[getStringRep(prop2)] += 1
-
-    print("Number of combinations that lead to a 4-chromatic sequence:", len(naughty_combinations))
-    print("How are these distributed against 4-chromatic propagations")
-    print(end_tile_count)
-
-    i = 1
-    countpropcombs =0
-    for naughty in naughty_propagations:
-        print("Propagation", i)
-        print("Represented by: ", getStringRep(naughty))
-        print("This one is led to by", len(four_chromatic_pairs[getStringRep(naughty)]), "tile combinations")
-        countpropcombs += len(four_chromatic_pairs[getStringRep(naughty)])
-        print(four_chromatic_pairs[getStringRep(naughty)])
-        i += 1
-    print("countpropcombs",countpropcombs)
-
-    print("Which propagations can result in 4-chromatic combinations?")
-    print("How often do they do so?")
-    print(lead_to_4)
-
-    tiles_can_get_to_4 = []
-    for prop in tile_props:
-        successors = all_successors(prop, tile_props, propagation_combinations)
-        get_to_4 = False
-        # # number of propagations don't change even if this is ommitted
-        # if prop_in_list(prop, naughty_propagations):
-        #     get_to_4 = True
-        # # which means every tile can be reachable ?
-        for successor in successors:
-            if prop_in_list(successor, naughty_propagations):
-                get_to_4 = True
-        if get_to_4:
-            tiles_can_get_to_4 += [prop]
-
-    print("No of tile propagations that feature in a 4 chromatic sequence = ", len(tiles_can_get_to_4))
-    could_be_4chrom_tiles = []
-    for tile in tiles:
-        for tile_prop in tiles_can_get_to_4:
-            if props_equal(tile_prop_mapping[tile], tile_prop):
-                could_be_4chrom_tiles += [tile]
-                print(tile, getStringRep(tile_prop))
-    print(could_be_4chrom_tiles)
-    print("Number of tiles of interest =", len(could_be_4chrom_tiles))
-
-    props_can_get_to_4 = []
-    for prop in all_props:
-        successors = all_successors(prop, all_props, propagation_combinations)
-        get_to_4 = False
-        if prop_in_list(prop, naughty_propagations):
-            get_to_4 = True
-        for successor in successors:
-            if prop_in_list(successor, naughty_propagations):
-                get_to_4 = True
-        if get_to_4:
-            props_can_get_to_4 += [prop]
-    print("No of propagations that feature in a 4 chromatic sequence = ", len(props_can_get_to_4))
-
-    naughty_can_get_to_4 = []
-    for prop in naughty_propagations:
-        successors = all_successors(prop, all_props, propagation_combinations)
-        get_to_4 = False
-        for successor in successors:
-            if prop_in_list(successor, naughty_propagations):
-                get_to_4 = True
-        if get_to_4:
-            naughty_can_get_to_4 += [prop]
-    print("From the ", len(naughty_propagations), " propagations that are 4-chromatic")
-    print(len(naughty_can_get_to_4), "have 4-chromatic successors")
+    vertices, edge_list, edge_indices, vertex_prop_map, final_states = (get_combination_subset(all_props,
+                                                                                               naughty_propagations,
+                                                                                               propagation_combinations,
+                                                                                               tile_props))
+    tile_vertex_map = {}
+    for edge_index in edge_indices:
+        prop = vertex_prop_map[edge_index]
+        for tile in tile_prop_mapping.keys():
+            if props_equal(tile_prop_mapping[tile], prop):
+                tile_vertex_map[tile] = edge_index
+    print(tile_vertex_map)
