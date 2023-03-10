@@ -462,4 +462,4 @@ if __name__ == "__main__":
         for tile in tile_prop_mapping.keys():
             if props_equal(tile_prop_mapping[tile], prop):
                 tile_vertex_map[tile] = edge_index
-    print(tile_vertex_map)
+    print(vertices, edge_list, edge_indices, vertex_prop_map, final_states, tile_vertex_map)
