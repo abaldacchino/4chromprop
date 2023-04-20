@@ -40,7 +40,7 @@ def isUndirected(tilings):
 
 
 def createMatrices(tileDict):
-    print(tileDict)
+    # print(tileDict)
     vertices = list(tileDict.keys())
     dim = len(vertices)
     m = np.zeros((dim, dim), dtype=int)
@@ -62,6 +62,46 @@ def getMathematicaAdj(m):
         s += "{"
         s += str(l[0])
         for i in range(1, len(l)):
+            s += ", " + str(l[i])
+        s += "}"
+
+    s += "}"
+    return s
+
+def getMathematicaAdjRemoving4(m):
+    s = "{"
+    for j in range(len(m)):
+        if j == 3:
+            continue
+        l = m[j]
+        if j !=0:
+            s += ", "
+        s += "{"
+        s += str(l[0])
+        for i in range(1, len(l)):
+            if i == 3:
+                continue
+            s += ", " + str(l[i])
+        s += "}"
+
+    s += "}"
+    return s
+
+
+def getMathematicaAdjRemoving4and3(m):
+    s = "{"
+    for j in range(len(m)):
+        if j == 3 or j==2:
+            continue
+
+        l = m[j]
+        if j !=0:
+            s += ", "
+        s += "{"
+        s += str(l[0])
+        for i in range(1, len(l)):
+            if i == 3 or i==2:
+                continue
             s += ", " + str(l[i])
         s += "}"
 
