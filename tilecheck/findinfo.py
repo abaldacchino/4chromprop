@@ -3,7 +3,7 @@ import json
 import copy
 import numpy as np
 
-import findpropogation
+import findpropagation
 
 insides = ["AA", "AB", "AV", "AD",
            "BA", "BB", "BV", "BD",
@@ -122,9 +122,9 @@ if __name__ == "__main__":
                 tile_data[tile] = {}
                 tile_data[tile]["adjacency matrix"] = getMathematicaAdj(createMatrices(tilings[tile]))
                 tile_data[tile]["dict adjacencies"] = tilings[tile]
-                tile_data[tile]["aggregated propagations"] = findpropogation.getPropagations(tile)
-                tile_data[tile]["simple propagations"] = findpropogation.getSimplePropagations(tile)
-                tile_data[tile]["concrete propagations"] = findpropogation.getConcretePropagations(tile)
+                tile_data[tile]["aggregated propagations"] = findpropagation.getPropagations(tile)
+                tile_data[tile]["simple propagations"] = findpropagation.getSimplePropagations(tile)
+                tile_data[tile]["concrete propagations"] = findpropagation.getConcretePropagations(tile)
 
         with open("info.json", "w") as outfile:
             json.dump(tile_data, outfile, indent=4)

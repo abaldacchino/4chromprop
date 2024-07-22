@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import dfa
 
 tiles = ['AAL', 'ABL', 'AVL', 'ADL', 'BAL', 'BBL', 'BVL', 'BDL', 'VAL', 'VBL', 'VVL',
          'VDL', 'DAL', 'DBL', 'DVL', 'DDL', 'AIBL', 'AIVL', 'BIAL', 'VIAL', 'HL', 'AAdL',
@@ -7,11 +8,28 @@ tiles = ['AAL', 'ABL', 'AVL', 'ADL', 'BAL', 'BBL', 'BVL', 'BDL', 'VAL', 'VBL', '
          'VDdL', 'DAdL', 'DBdL', 'DVdL', 'DDdL', 'AIBdL', 'AIVdL', 'BIAdL', 'VIAdL', 'HdL']
 
 
+def get_trans(triples, state, input_symbol):
+    if state == -1:
+        return input_symbol
+
+    match = -1
+    # trying to find if (state, input_symbol, y) is a triple in triples
+    for t in triples:
+        if triples[0] == state and triples[1] == input_symbol:
+            match = triples[2]
+
+    if match == -1:  # case no match found
+        return -2
+    else:
+        return match
+
+
 def getAdjProp(concretePropagations):
     """
     Method finds and returns the adjacency matrix that represents the propagation graph of
     a tile given its concrete propagations, ie a list of permissible transitions from a colouring
-    to a colouring using said tile.
+    to a colouring using said tile. We join (a, b) to (c,d) by identifying a with d and b with c.
+
     :param concretePropagations: list of propagations in concrete form ie (1,1) ~> (2,3)
     :return: returns an adjacency matrix that represents the graph with vertices being all
     3 colourings of 2 vertices, with edges if a propagation can take you from one colouring
@@ -366,6 +384,21 @@ if __name__ == "__main__":
     tile_props, tile_prop_mapping = getTilePropagations()
     # dict of dicts where propagation_combinations[prop1][prop2] = prop1 * prop2
     # ie stores the outcome of multiplying the two adjacency matrices together
+
+    count =0
+    for tile_prop in tile_props:
+
+        if tile_prop[1][1] == 0 and tile_prop[0][3] == 0:
+            count += 1
+            print(next(key for key, value in tile_prop_mapping.items() if props_equal(value, tile_prop)))
+    print(count)
+    count = 0
+    for tile_prop in tile_props:
+        if tile_prop[1][1] == 0 and tile_prop[0][0] ==0:
+            count += 1
+            print(next(key for key, value in tile_prop_mapping.items() if props_equal(value, tile_prop)))
+    print(count)
+
     propagation_combinations = {}
 
     all_props = tile_props.copy()
@@ -427,9 +460,10 @@ if __name__ == "__main__":
         old_props = old_props + new_props
         # changing the new_props to be the most recently found new ones
         new_props = next_props
+
     # It might be interesting to note that this usually ends after 4 loops
     # meaning that every possible propagation is 4 iterations away from the initial tiles
-    print("This was done in", i, "iterations")
+    # print("This was done in", i, "iterations")
     # Check for duplicate propagations (just in case)
     count = 0
     for prop1 in all_props:
@@ -444,6 +478,10 @@ if __name__ == "__main__":
     # finding overlap with the initial tile propagations
     naughty_tile_props = []
     for prop in all_props:
+        # if prop[0][0] == 1 and prop[1][1] == 0:
+            # print(prop)
+            # if prop_in_list(prop, tile_props):
+            #     print("is a tile propagation")
         if prop[0][0] == 0 and prop[1][1] == 0:
             naughty_propagations += [prop]
             if prop_in_list(prop, tile_props):
@@ -463,3 +501,21 @@ if __name__ == "__main__":
             if props_equal(tile_prop_mapping[tile], prop):
                 tile_vertex_map[tile] = edge_index
     print(vertices, edge_list, edge_indices, vertex_prop_map, final_states, tile_vertex_map)
+
+    automata = dfa.DFA(
+        start=-1,
+        inputs=tile_vertex_map.keys(),
+        label=lambda s: s in final_states,
+        transition=lambda s, c: get_trans(edge_list, s, tile_vertex_map[c]),
+    )
+
+    print(dfa.dfa2dict(automata))
+    print("********************************")
+
+    automata = automata.minimize()
+    print(dfa.dfa2dict(automata))
+    #
+    # for i in range(50):
+    #     print(i, vertex_prop_map[i][0])
+    #     if i == 22:
+    #         print(vertex_prop_map[22])

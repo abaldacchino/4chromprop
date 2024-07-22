@@ -184,17 +184,20 @@ if __name__ == "__main__":
 
         print("\n---------------------------------\n3-colour Propagations for " + tileID)
 
-        for _input in [('a', 'b'), ('a', 'a')]:
-            if 2 in tile[1] and _input[0] == _input[1]:
-                continue
+        print(getConcretePropagations(tileID))
+        # for _input in [('a', 'b'), ('a', 'a')]:
+        #     if 2 in tile[1] and _input[0] == _input[1]:
+        #         continue
+        #
+        #     colouring = dict.fromkeys(tile.keys(), '')
+        #     colouring[1] = _input[0]
+        #     colouring[2] = _input[1]
+        #
+        #     queue = []
+        #     for v in tile[1]:
+        #         if v != 2: queue.append(v)
+        #
+        #     for p in simplifyPropagations(findPropagation(queue, colouring, ['a', 'b', 'c'], tile), ['a', 'b', 'c']):
+        #         print("(" + p[0][0] + ", " + p[0][1] + ") ~> (" + p[1][0] + ", " + p[1][1] + ")")
 
-            colouring = dict.fromkeys(tile.keys(), '')
-            colouring[1] = _input[0]
-            colouring[2] = _input[1]
 
-            queue = []
-            for v in tile[1]:
-                if v != 2: queue.append(v)
-
-            for p in simplifyPropagations(findPropagation(queue, colouring, ['a', 'b', 'c'], tile), ['a', 'b', 'c']):
-                print("(" + p[0][0] + ", " + p[0][1] + ") ~> (" + p[1][0] + ", " + p[1][1] + ")")
