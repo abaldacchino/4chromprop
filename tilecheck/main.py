@@ -339,7 +339,21 @@ if __name__ == "__main__":
     )
 
     automata = automata.minimize()
-    print(dfa.dfa2dict(automata))
+    dfa_dict = dfa.dfa2dict(automata)
+    start_state = dfa_dict[1]
+    transition_info = dfa_dict[0]
+    # removing sink state
+    del transition_info[2]
+    for state in transition_info.keys():
+        state_transitions = transition_info[state][1]
+
+        for tile in tile_vertex_map.keys():
+            if state_transitions[tile] == 2:
+                # removing edges to the sink state
+                del state_transitions[tile]
+
+    print(start_state)
+    print(transition_info)
 
 
 
