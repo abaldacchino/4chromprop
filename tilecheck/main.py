@@ -329,6 +329,7 @@ if __name__ == "__main__":
     print("Final states", final_states)
     print("Alphabet ", edge_indices)
     print("Transition function", edge_list)
+    print(len(edge_list))
     print("Tiles to numbers", tile_vertex_map)
 
     automata = dfa.DFA(
